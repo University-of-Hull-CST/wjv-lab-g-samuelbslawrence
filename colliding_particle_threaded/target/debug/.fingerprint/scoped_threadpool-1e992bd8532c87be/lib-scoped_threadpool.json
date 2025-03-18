@@ -1,0 +1,1 @@
+{"rustc":13800692020808712694,"features":"[]","declared_features":"[\"nightly\"]","target":11629356283301171916,"profile":2241668132362809309,"path":8482904015358009925,"deps":[],"local":[{"CheckDepInfo":{"dep_info":"debug\\.fingerprint\\scoped_threadpool-1e992bd8532c87be\\dep-lib-scoped_threadpool","checksum":false}}],"rustflags":[],"config":2069994364910194474,"compile_kind":0}

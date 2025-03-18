@@ -37,6 +37,21 @@ impl Particle {
         self.x = (self.x + dx).clamp(0.0, ENCLOSURE_SIZE);
         self.y = (self.y + dy).clamp(0.0, ENCLOSURE_SIZE);
     }
+    
+    // region: Collision Task Changes
+    pub fn collide(&self, other: &Particle) -> bool {
+        // Calculate distance between particles
+        let dx = self.x - other.x;
+        let dy = self.y - other.y;
+        let distance_squared = dx * dx + dy * dy;
+        
+        // Define collision threshold (particles are "close enough" to collide)
+        const COLLISION_THRESHOLD: f32 = 0.5;
+        
+        // Return true if particles are close enough to collide
+        distance_squared < COLLISION_THRESHOLD * COLLISION_THRESHOLD
+    }
+    // endregion
 }
 
 pub struct ParticleSystem {
@@ -77,6 +92,25 @@ impl ParticleSystem {
         println!("Particles were moved {} times", self.move_count);
         println!("Total number of particles: {}", self.total_moved_particles);
     }
+    
+    // region: Collision Task Changes
+    pub fn check_collisions(&self) {
+        println!("\nChecking for collisions...");
+        
+        // Initially limit to one thread for collision detection
+        let collision_thread_count = 1;
+        let mut collision_pool = Pool::new(collision_thread_count);
+        
+        // Clone particles to avoid borrowing issues
+        let particles_clone = self.particles.clone();
+        
+        collision_pool.scoped(|scope| {
+            scope.execute(move || {
+                collision_thread_main(&particles_clone);
+            });
+        });
+    }
+    // endregion
 }
 
 fn thread_main(chunk: &mut [Particle], iteration_count: u32) {
@@ -87,7 +121,25 @@ fn thread_main(chunk: &mut [Particle], iteration_count: u32) {
     }
 }
 
+// region: Collision Task Changes
+fn collision_thread_main(particles: &[Particle]) {
+    let mut collision_count = 0;
+    
+    // Check each pair of particles for collisions
+    for i in 0..particles.len() {
+        for j in (i+1)..particles.len() {
+            if particles[i].collide(&particles[j]) {
+                collision_count += 1;
+            }
+        }
+    }
+    
+    println!("Total collisions detected: {}", collision_count);
+}
+// endregion
+
 fn main() {
     let mut system = ParticleSystem::new(); // Create a new particle system
     system.move_particles_loop(); // Run the loop to move the particles across threads
+    system.check_collisions(); // Check for collisions
 }
